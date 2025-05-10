@@ -1,84 +1,18 @@
-#
-# Blender turbo.me file
-# https://github.com/turboapps/turbome/tree/master/blender
-#
-# Licensed under the Apache License, Version 2.0
-# http://www.apache.org/licenses/LICENSE-2.0
+import bpy
 
-meta title="Blender"
-meta namespace="blender"
-meta name="blender"
+# Clear existing mesh
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
 
-###################################
-# Pull dependency images
-###################################
+# Create airplane body (cylinder)
+bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=1, depth=6, location=(0, 0, 0))
+body = bpy.context.active_object
+body.name = 'Airplane_Body'
 
-using wget,powershell
-
-
-###################################
-# Download and install
-###################################
-
-cmd mkdir c:\Workspace
-workdir c:\Workspace
-
-# Write powershell script
-batch cmd
-  echo param([string]$arg) >> getUrlAndVersion.ps1
-  echo [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 >> getUrlAndVersion.ps1
-  echo $page = Invoke-WebRequest -Uri "https://www.blender.org/download/" >> getUrlAndVersion.ps1
-  echo $link = ($page.Links.href -match "windows64.msi")[0]  >> getUrlAndVersion.ps1
-  echo $link -match "[0-9]\.[0-9]*[a-z]" ^| Out-Null>> getUrlAndVersion.ps1
-  echo $version = $Matches[0] >> getUrlAndVersion.ps1
-  echo if($arg -ne "link") {Write-Host $version; Exit 0} >> getUrlAndVersion.ps1
-  echo $link -match "[0-9]\.[0-9]*" ^| Out-Null>> getUrlAndVersion.ps1
-  echo $versionMain = $Matches[0] >> getUrlAndVersion.ps1
-  echo $downloadUrl = "https://download.blender.org/release/" >> getUrlAndVersion.ps1
-  echo $page = Invoke-WebRequest -Uri $downloadUrl >> getUrlAndVersion.ps1
-  echo $downloadUrl += $page.Links.href -match $versionMain >> getUrlAndVersion.ps1
-  echo $page = Invoke-WebRequest -Uri $downloadUrl >> getUrlAndVersion.ps1
-  echo $downloadUrl += $page.Links.href -match $version+"-windows32.zip" >> getUrlAndVersion.ps1
-  echo Write-Host $downloadUrl >> getUrlAndVersion.ps1
-
-# Get url
-cmd powershell -File getUrlAndVersion.ps1 -arg "link"
-var url=last
-
-cmd powershell -File getUrlAndVersion.ps1 -arg "version"
-var tag=last
-
-# Install
-cmd wget -Oblender.zip %url%
-cmd powershell Expand-Archive blender.zip C:\blenderTemp
-
-cmd dir /b C:\blenderTemp
-var blenderpath = "C:\blenderTemp\" + last
-cmd move %blenderpath% C:\blender
-
-
-# Install file associations
-cmd C:\blender\blender.exe -r
-
-###################################
-# Startup File
-###################################
-startup file ("C:\blender\blender.exe")
-
-###################################
-# Environment Variables
-###################################
-
-# No variables needed
-
-###################################
-# Clean up
-###################################
-
-workdir c:\
-
-cmd rmdir c:\Workspace /s /q
-cmd rmdir c:\wget /s /q
-cmd rmdir C:\blenderTemp /s /q
-
-meta tag=tag
+# Create wings (scaled cube)
+bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+wing = bpy.context.active_object
+wing.name = 'Wing'
+wing.scale = (5, 0.1, 0.3)  # Scaling the wing to give it a more airplane-like shape
+wing.location = (0, 0, 0.5)  # Position the wing appropriately
+wing.parent = body  # Parent the wing to the body
